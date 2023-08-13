@@ -23,9 +23,10 @@ namespace Wallet_Project.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<CustomResultDTO>> Login(LoginUserDTO loginModel)
+        public async Task<ActionResult<CustomResultDTO>> Login([FromBody] LoginUserDTO loginModel)
         {
             CustomResultDTO customResult = new CustomResultDTO();
+
             var user = await _userManager.FindByNameAsync(loginModel.Mobile);
 
             if (user != null && await _userManager.CheckPasswordAsync(user, loginModel.Password))
@@ -70,7 +71,7 @@ namespace Wallet_Project.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<CustomResultDTO>> Register(RegisterUserDTO registerModel)
+        public async Task<ActionResult<CustomResultDTO>> Register([FromBody] RegisterUserDTO registerModel)
 
         {
             CustomResultDTO customResult = new CustomResultDTO();
@@ -92,7 +93,7 @@ namespace Wallet_Project.Controllers
                     UserName = registerModel.Mobile,
                     Name = registerModel.Name,
                     Mobile = registerModel.Mobile,
-                    Role = Data.Enums.Roles.User,
+                    Role = registerModel.Role,
                     Balance = 1000.00m
                 };
 

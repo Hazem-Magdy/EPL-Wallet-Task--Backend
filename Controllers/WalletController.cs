@@ -18,7 +18,7 @@ namespace Wallet_Project.Controllers
         }
 
         [HttpPost("transfer")]
-        public async Task<IActionResult> Transfer(TransferDTO model)
+        public async Task<IActionResult> Transfer([FromBody] TransferDTO model)
         {
             var senderUser = await _userRepository.GetUserByMobileAsync(model.SenderMobile);
             var receiverUser = await _userRepository.GetUserByMobileAsync(model.ReceiverMobile);
