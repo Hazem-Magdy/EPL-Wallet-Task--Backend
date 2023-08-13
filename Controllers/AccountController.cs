@@ -23,11 +23,12 @@ namespace Wallet_Project.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginUserDTO model)
+        public async Task<ActionResult<CustomResultDTO>> Login(LoginUserDTO loginModel)
         {
-            var user = await _userManager.FindByNameAsync(model.Mobile);
+            CustomResultDTO customResult = new CustomResultDTO();
+            var user = await _userManager.FindByNameAsync(loginModel.Mobile);
 
-            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+            if (user != null && await _userManager.CheckPasswordAsync(user, loginModel.Password))
             {
                 var userClaims = new List<Claim>
                 {
@@ -52,25 +53,31 @@ namespace Wallet_Project.Controllers
                     signingCredentials: creds
                 );
 
-                return Ok(new
+                customResult.IsPass = true;
+                customResult.Data = new
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
                     expiration = token.ValidTo
-                });
+                };
+                customResult.Message = "Token created successfully.";
             }
-
-            return Unauthorized("Invalid login credentials.");
+            else
+            {
+                customResult.IsPass = false;
+                customResult.Message = "Invalid login credentials.";
+            }
+            return customResult;
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<CustomResultDTO>> Register(RegisterUserDTO model)
+        public async Task<ActionResult<CustomResultDTO>> Register(RegisterUserDTO registerModel)
 
         {
             CustomResultDTO customResult = new CustomResultDTO();
             if (ModelState.IsValid)
             {
                 // dublicated mobile number
-                var existingUser = await _userManager.FindByNameAsync(model.Mobile);
+                var existingUser = await _userManager.FindByNameAsync(registerModel.Mobile);
 
                 if (existingUser != null)
                 {
@@ -79,22 +86,23 @@ namespace Wallet_Project.Controllers
                     return customResult;
                 }
 
+                // craete new user
                 var user = new User
                 {
-                    UserName = model.Mobile,
-                    Name = model.Name,
-                    Mobile = model.Mobile,
+                    UserName = registerModel.Mobile,
+                    Name = registerModel.Name,
+                    Mobile = registerModel.Mobile,
                     Role = Data.Enums.Roles.User,
                     Balance = 1000.00m
                 };
 
-                var createResult = await _userManager.CreateAsync(user, model.Password);
+                var createResult = await _userManager.CreateAsync(user, registerModel.Password);
 
                 if (createResult.Succeeded)
                 {
                     // add role (Admin/User) to user in identity
 
-                    if (model.Role.ToString() == "Admin")
+                    if (registerModel.Role.ToString() == "Admin")
                     {
                         if (await _roleManager.RoleExistsAsync("Admin"))
                         {
@@ -124,6 +132,7 @@ namespace Wallet_Project.Controllers
                     }
                     customResult.IsPass = true;
                     customResult.Message = "Account created succesfully.";
+                    customResult.Data = $"Account created succesfully at {DateTime.UtcNow}";
                 }
                 else
                 {
